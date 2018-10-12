@@ -13,16 +13,12 @@
  */
 package org.codice.ddf.catalog.cst.api;
 
-public class CstException extends RuntimeException {
-  public CstException(String message) {
-    super(message);
-  }
+import java.util.Set;
 
-  public CstException(String message, Throwable cause) {
-    super(message, cause);
-  }
+public interface InternalTaxonomyTransformer {
+  String getNamespace();
 
-  public CstException(Throwable cause) {
-    super(cause);
-  }
+  Set<CstPair> toInternalTaxonomy(Set<CstPair> pair);
+
+  Set<CstPair> fromInternalTaxonomy(Set<CstPair> pair);
 }

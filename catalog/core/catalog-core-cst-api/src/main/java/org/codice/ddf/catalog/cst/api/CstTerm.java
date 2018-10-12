@@ -13,16 +13,27 @@
  */
 package org.codice.ddf.catalog.cst.api;
 
-import ddf.catalog.data.AttributeType;
 import java.io.Serializable;
 
-public interface CstTerm<T extends Serializable> {
+public interface CstTerm {
 
   String getName();
 
   String getDescription();
 
-  AttributeType<T> getType();
+  Type getType();
 
-  boolean validateValue(Serializable value);
+  String validateValue(Serializable value);
+
+  enum Type {
+    STRING,
+    BOOLEAN,
+    DATE,
+    SHORT,
+    INTEGER,
+    LONG,
+    FLOAT,
+    DOUBLE,
+    GEOMETRY
+  }
 }

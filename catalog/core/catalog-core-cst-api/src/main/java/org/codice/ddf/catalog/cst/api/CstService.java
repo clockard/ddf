@@ -13,18 +13,27 @@
  */
 package org.codice.ddf.catalog.cst.api;
 
-import ddf.catalog.data.Attribute;
 import java.util.Set;
 
 public interface CstService {
 
+  Set<String> getOrderedNamespaces();
+
   Set<CstDefinition> getCstDefinitions();
 
-  CstDefinition getCstDefinition(String name);
+  Set<CstDefinition> getCstDefinitions(String namespace);
 
-  Attribute transform(Attribute attribute, CstDefinition from, CstDefinition to);
+  CstDefinition getCstDefinition(String namespace, int version);
 
-  Attribute toCatalogTaxonomy(Attribute attribute, CstDefinition from);
+  Set<CstPair> transform(Set<CstPair> pairs, CstDefinition from, CstDefinition to);
 
-  Attribute fromCatalogTaxonomy(Attribute attribute, CstDefinition to);
+  Set<CstPair> transform(CstPair pair, CstDefinition from, CstDefinition to);
+
+  Set<CstPair> toCatalogTaxonomy(Set<CstPair> pairs, CstDefinition from);
+
+  Set<CstPair> toCatalogTaxonomy(CstPair pair, CstDefinition from);
+
+  Set<CstPair> fromCatalogTaxonomy(Set<CstPair> pairs, CstDefinition to);
+
+  Set<CstPair> fromCatalogTaxonomy(CstPair pair, CstDefinition to);
 }

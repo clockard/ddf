@@ -13,16 +13,11 @@
  */
 package org.codice.ddf.catalog.cst.api;
 
-public class CstException extends RuntimeException {
-  public CstException(String message) {
-    super(message);
-  }
+import java.io.Serializable;
+import java.util.AbstractMap;
 
-  public CstException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public CstException(Throwable cause) {
-    super(cause);
+public class CstPair extends AbstractMap.SimpleEntry<String, Serializable> {
+  public CstPair(String key, Serializable value) {
+    super(key, value);
   }
 }

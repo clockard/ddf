@@ -41,6 +41,7 @@
         <bundle>mvn:org.codice.thirdparty/tika-bundle/${tika.thirdparty.bundle.version}</bundle>
         <bundle>mvn:org.codice.thirdparty/gt-opengis/${opengis.bundle.version}</bundle>
         <bundle>mvn:ddf.catalog.core/catalog-core-attachment/${project.version}</bundle>
+        <bundle>mvn:ddf.catalog.core/catalog-core-cst-api/${project.version}</bundle>
     </feature>
 
     <feature name="catalog-core" version="${project.version}"
@@ -84,6 +85,12 @@
              description="Generate Filenames for Ingested Attachments">
         <feature>catalog-core-api</feature>
         <bundle>mvn:ddf.catalog.core/catalog-core-attachment-impl/${project.version}</bundle>
+    </feature>
+
+    <feature name="catalog-core-cst" version="${project.version}"
+             description="CST services and plugins">
+        <feature>catalog-core-api</feature>
+        <bundle>mvn:ddf.catalog.core/catalog-core-cst-impl/${project.version}</bundle>
     </feature>
 
     <feature name="catalog-core-plugins" version="${project.version}"

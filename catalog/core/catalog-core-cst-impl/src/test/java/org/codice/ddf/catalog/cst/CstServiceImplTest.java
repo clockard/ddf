@@ -11,18 +11,11 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.cst.api;
+package org.codice.ddf.catalog.cst;
 
-public class CstException extends RuntimeException {
-  public CstException(String message) {
-    super(message);
-  }
+import org.junit.Test;
 
-  public CstException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public CstException(Throwable cause) {
-    super(cause);
-  }
+public class CstServiceImplTest {
+  @Test
+  public void testThings() {}
 }

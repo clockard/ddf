@@ -39,7 +39,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Export-Package>
-                            ddf.catalog*
+                            org.codice.ddf.catalog.cst.api*
                         </Export-Package>
                     </instructions>
                 </configuration>
