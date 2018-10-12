@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright (c) Codice Foundation
+ *
+ * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or any later version. 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details. A copy of the GNU Lesser General Public License is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ *
+ **/
+-->
+<metatype:MetaData xmlns:metatype="http://www.osgi.org/xmlns/metatype/v1.0.0">
+
+    <OCD name="CST Federation Source"
+         description="Full fidelity CSW Federation using CST query parameters."
+         id="Cst_Federation_Profile_Source">
+
+        <AD description="The unique name of the Source" name="Source ID" id="id" required="true"
+            type="String" default="CSW"/>
+
+        <AD description="URL to the endpoint implementing the Catalogue Service for Web (CSW) spec and CST"
+            name="CSW URL" id="cswUrl" required="true" type="String"
+            default="${org.codice.ddf.external.protocol}${org.codice.ddf.external.hostname}:${org.codice.ddf.external.port}${org.codice.ddf.external.context}${org.codice.ddf.system.rootContext}/csw"/>
+
+            queryTypeName
+        <AD description="The CST definition to use when transforming outgoing queries. Internal taxonomy query terms will be transformed to this definition. If no definition is provided the remote CSW endpoint capabilities will be checked and the highest fidelity common CST definition will be used. Format: <namespace>:<version> Ex: 'cst:ddf:1'" name="CST Definition" id="queryTypeName"
+            required="false" type="String"/>
+
+        <AD description="Username for CSW Service (optional)" name="Username" id="username"
+            required="false" type="String"/>
+        <AD description="Password for CSW Service (optional)" name="Password" id="password"
+            required="false" type="Password" default=""/>
+
+        <AD description="Amount of time to attempt to establish a connection before timing out, in milliseconds."
+            name="Connection Timeout" id="connectionTimeout"
+            required="true" type="Integer" default="30000"/>
+
+        <AD description="Amount of time to wait for a response before timing out, in milliseconds."
+            name="Receive Timeout" id="receiveTimeout"
+            required="true" type="Integer" default="60000"/>
+    </OCD>
+
+    <Designate pid="Cst_Federated_Source" factoryPid="Cst_Federated_Source">
+        <Object ocdref="Csw_Federated_Source"/>
+    </Designate>
+
+</metatype:MetaData>

@@ -11,7 +11,7 @@
  * License is distributed along with this program and can be found at
  * <http://www.gnu.org/licenses/lgpl.html>.
  */
-package org.codice.ddf.catalog.cst;
+package org.codice.ddf.catalog.cst.transformer;
 
 import java.io.Serializable;
 import java.util.ArrayList;

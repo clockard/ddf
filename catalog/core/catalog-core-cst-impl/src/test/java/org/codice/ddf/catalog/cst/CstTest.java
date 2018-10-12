@@ -23,7 +23,7 @@ import org.codice.ddf.catalog.cst.api.CstTerm;
 import org.codice.ddf.catalog.cst.api.InternalTaxonomyTransformer;
 import org.codice.ddf.catalog.cst.data.CstDefinitionImpl;
 import org.codice.ddf.catalog.cst.data.CstTermImpl;
-import org.codice.ddf.catalog.cst.data.InternalTaxonomyTransformerImpl;
+import org.codice.ddf.catalog.cst.transformer.InternalTaxonomyTransformerImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

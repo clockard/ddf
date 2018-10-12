@@ -37,6 +37,10 @@ public class CstDefinitionImpl implements CstDefinition {
 
   private Map<String, Function<CstPair, Set<CstPair>>> fromPreviousTransforms;
 
+  public CstDefinitionImpl(String namespace, int version) {
+    this(namespace, version, new HashSet<>());
+  }
+
   public CstDefinitionImpl(String namespace, int version, Collection<CstTerm> terms) {
     this(namespace, version, terms, new HashMap<>(), new HashMap<>());
   }

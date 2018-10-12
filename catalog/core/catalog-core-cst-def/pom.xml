@@ -21,8 +21,8 @@
         <groupId>ddf.catalog.core</groupId>
         <version>2.14.0-SNAPSHOT</version>
     </parent>
-    <artifactId>catalog-core-cst-impl</artifactId>
-    <name>DDF :: Catalog :: Core :: CST :: Impl</name>
+    <artifactId>catalog-core-cst-def</artifactId>
+    <name>DDF :: Catalog :: Core :: CST :: DEF</name>
     <packaging>bundle</packaging>
     <dependencies>
         <dependency>
@@ -35,14 +35,14 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-cst-impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codice.thirdparty</groupId>
-            <artifactId>geotools-suite</artifactId>
-            <version>${org.geotools.bundle.version}</version>
         </dependency>
         <dependency>
             <groupId>ddf.catalog.core</groupId>
@@ -66,14 +66,6 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
-                        <Export-Package>
-                            org.codice.ddf.catalog.cst.data,
-                            org.codice.ddf.catalog.cst.transformer
-                        </Export-Package>
-                        <Embed-Dependency>
-                            catalog-core-api-impl,
-                            platform-util
-                        </Embed-Dependency>
                     </instructions>
                 </configuration>
             </plugin>

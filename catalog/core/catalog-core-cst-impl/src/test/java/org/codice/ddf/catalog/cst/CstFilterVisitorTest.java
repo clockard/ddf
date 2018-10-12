@@ -24,6 +24,7 @@ import org.codice.ddf.catalog.cst.api.CstDefinition;
 import org.codice.ddf.catalog.cst.api.CstPair;
 import org.codice.ddf.catalog.cst.api.CstService;
 import org.codice.ddf.catalog.cst.api.CstTerm;
+import org.codice.ddf.catalog.cst.transformer.CstFilterVisitor;
 import org.geotools.filter.FilterFactoryImpl;
 import org.junit.Before;
 import org.junit.Test;

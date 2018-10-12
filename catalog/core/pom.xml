@@ -128,5 +128,6 @@
         <module>catalog-core-attachment-impl</module>
         <module>catalog-core-cst-api</module>
         <module>catalog-core-cst-impl</module>
+        <module>catalog-core-cst-def</module>
     </modules>
 </project>
