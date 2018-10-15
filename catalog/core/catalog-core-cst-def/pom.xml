@@ -55,7 +55,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -66,6 +65,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Embed-Dependency>
+                            catalog-core-api-impl,
+                            platform-util
+                        </Embed-Dependency>
                     </instructions>
                 </configuration>
             </plugin>

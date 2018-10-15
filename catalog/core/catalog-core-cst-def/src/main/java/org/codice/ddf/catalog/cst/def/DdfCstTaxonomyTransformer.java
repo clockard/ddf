@@ -13,15 +13,25 @@
  */
 package org.codice.ddf.catalog.cst.def;
 
+import java.util.Collections;
 import org.codice.ddf.catalog.cst.api.CstPair;
-import org.codice.ddf.catalog.cst.api.InternalTaxonomyTransformer;
 import org.codice.ddf.catalog.cst.transformer.InternalTaxonomyTransformerImpl;
-
-import java.util.Set;
 
 public class DdfCstTaxonomyTransformer extends InternalTaxonomyTransformerImpl {
 
-    public DdfCstTaxonomyTransformer(){
-        super("cst:ddf");
-    }
+  public DdfCstTaxonomyTransformer() {
+    super("cst:ddf");
+    init();
+  }
+
+  public void init() {
+    addNameTransform("subtitle", "ext.ddms.subtitle");
+    addTaxonomyTransform(
+        "resource-size",
+        pair -> Collections.singleton(new CstPair(pair.getKey(), pair.getValue().toString())),
+        "resource-size",
+        pair ->
+            Collections.singleton(
+                new CstPair(pair.getKey(), Long.parseLong(pair.getValue().toString()))));
+  }
 }

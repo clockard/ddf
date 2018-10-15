@@ -79,6 +79,7 @@
         </bundle>
         <bundle>mvn:ddf.catalog.core/catalog-core-defaultvalues/${project.version}</bundle>
         <bundle>mvn:ddf.catalog.core/catalog-core-metacardtype/${project.version}</bundle>
+        <feature>catalog-core-cst</feature>
     </feature>
 
     <feature name="catalog-core-attachment" version="${project.version}"
@@ -91,6 +92,7 @@
              description="CST services and plugins">
         <feature>catalog-core-api</feature>
         <bundle>mvn:ddf.catalog.core/catalog-core-cst-impl/${project.version}</bundle>
+        <bundle>mvn:ddf.catalog.core/catalog-core-cst-def/${project.version}</bundle>
     </feature>
 
     <feature name="catalog-core-plugins" version="${project.version}"

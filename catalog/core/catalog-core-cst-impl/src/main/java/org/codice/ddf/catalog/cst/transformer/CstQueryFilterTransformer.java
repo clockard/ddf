@@ -22,7 +22,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.codice.ddf.catalog.cst.api.CstDefinition;
 import org.codice.ddf.catalog.cst.api.CstService;
 import org.opengis.filter.Filter;

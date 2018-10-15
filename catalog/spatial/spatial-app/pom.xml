@@ -279,5 +279,10 @@
             <artifactId>converter</artifactId>
             <version>${countryconverter.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.codice.ddf.spatial</groupId>
+            <artifactId>spatial-csw-cst-source</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

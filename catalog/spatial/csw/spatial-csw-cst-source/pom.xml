@@ -21,10 +21,15 @@
         <artifactId>csw</artifactId>
         <version>2.14.0-SNAPSHOT</version>
     </parent>
-    <artifactId>spatial-csw-source</artifactId>
+    <artifactId>spatial-csw-cst-source</artifactId>
     <packaging>bundle</packaging>
-    <name>DDF :: Spatial :: CSW :: Source</name>
+    <name>DDF :: Spatial :: CSW :: CST Source</name>
     <dependencies>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-cst-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.codice.ddf.spatial</groupId>
             <artifactId>spatial-csw-source-common</artifactId>

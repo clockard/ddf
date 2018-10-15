@@ -30,6 +30,8 @@
     <reference id="securityManager" interface="ddf.security.service.SecurityManager"/>
     <reference id="clientFactoryFactory" interface="org.codice.ddf.cxf.client.ClientFactoryFactory"/>
     <reference id="encryptionService" interface="ddf.security.encryption.EncryptionService"/>
+    <reference id="queryFilterTransformerProvider" interface="ddf.catalog.transform.QueryFilterTransformerProvider"/>
+    <reference id="cstService" interface="org.codice.ddf.catalog.cst.api.CstService"/>
 
     <bean id="metacardTypes" class="org.codice.ddf.platform.util.SortedServiceList"/>
     <reference-list id="metacardTypeList" interface="ddf.catalog.data.MetacardType">
@@ -60,13 +62,17 @@
             interface="ddf.catalog.source.FederatedSource">
         <cm:managed-component class="org.codice.ddf.spatial.ogc.csw.catalog.source.CstSourceImpl"
                               init-method="init" destroy-method="destroy">
+            <!-- These are the only configurable properties -->
+            <property name="cswUrl" value=""/>
+            <property name="id" value=""/>
+            <property name="password" value=""/>
+            <property name="eventServiceAddress" value=""/>
+            <property name="registerForEvents" value="false"/>
+
+            <!-- These are defaulted for convenience -->
             <property name="context" ref="blueprintBundleContext"/>
             <property name="filterBuilder" ref="filterBuilder"/>
             <property name="filterAdapter" ref="filterAdapter"/>
-            <property name="cswUrl" value=""/>
-            <property name="id" value=""/>
-            <property name="username" value=""/>
-            <property name="password" value=""/>
             <property name="disableCnCheck" value="false"/>
             <property name="coordinateOrder" value="LON_LAT"/>
             <property name="usePosList" value="false"/>
@@ -75,22 +81,21 @@
             </property>
             <property name="pollInterval" value="5"/>
             <property name="resourceReader" ref="resourceReader"/>
-            <property name="outputSchema" value=""/>
+            <property name="outputSchema" value="urn:catalog:metacard"/>
             <property name="queryTypeName" value=""/>
-            <property name="queryTypeNamespace" value=""/>
+            <property name="queryTypeNamespace" value="http://www.opengis.net/cat/csw/2.0.2"/>
             <property name="cswTransformConverter">
                 <bean class="org.codice.ddf.spatial.ogc.csw.catalog.converter.GetRecordsResponseConverter">
                     <argument ref="cswTransformProvider"/>
                 </bean>
             </property>
+            <property name="cswQueryFilterTransformerProvider" ref="queryFilterTransformerProvider"/>
             <property name="isCqlForced" value="false"/>
             <property name="forceSpatialFilter" value="NO_FILTER"/>
             <property name="connectionTimeout" value="30000"/>
             <property name="receiveTimeout" value="60000"/>
             <property name="securityManager" ref="securityManager"/>
             <property name="metacardTypes" ref="metacardTypes"/>
-            <property name="eventServiceAddress" value=""/>
-            <property name="registerForEvents" value="false"/>
             <argument ref="encryptionService"/>
             <argument ref="clientFactoryFactory"/>
             <cm:managed-properties persistent-id="" update-strategy="component-managed"

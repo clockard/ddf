@@ -1175,7 +1175,7 @@ public abstract class AbstractCswSource extends MaskableImpl
         cswQueryFilterTransformerProvider != null
             ? cswQueryFilterTransformerProvider
                 .getTransformer(cswSourceConfiguration.getQueryTypeName())
-                .map(it -> it.transform(queryRequest, null))
+                .map(it -> it.transform(queryRequest, getQueryFilterTransformerProperties()))
                 .orElse(queryRequest)
             : queryRequest;
 
@@ -1197,6 +1197,10 @@ public abstract class AbstractCswSource extends MaskableImpl
     }
     ObjectFactory objectFactory = new ObjectFactory();
     return objectFactory.createQuery(queryType);
+  }
+
+  public Map<String, Serializable> getQueryFilterTransformerProperties() {
+    return null;
   }
 
   private SortByType createSortBy(QueryRequest queryRequest) {

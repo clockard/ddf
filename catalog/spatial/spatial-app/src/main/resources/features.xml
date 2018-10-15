@@ -107,6 +107,7 @@
         <bundle>mvn:org.codice.ddf.spatial/spatial-csw-action/${project.version}</bundle>
         <bundle>mvn:org.codice.ddf.spatial/spatial-csw-transformer/${project.version}</bundle>
         <bundle>mvn:org.codice.ddf.spatial/spatial-csw-source/${project.version}</bundle>
+        <bundle>mvn:org.codice.ddf.spatial/spatial-csw-cst-source/${project.version}</bundle>
         <bundle>mvn:org.codice.ddf.spatial/spatial-csw-endpoint/${project.version}</bundle>
     </feature>
 

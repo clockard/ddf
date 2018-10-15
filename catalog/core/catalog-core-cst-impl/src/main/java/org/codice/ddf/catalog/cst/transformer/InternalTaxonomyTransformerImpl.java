@@ -75,8 +75,19 @@ public class InternalTaxonomyTransformerImpl implements InternalTaxonomyTransfor
   }
 
   public void addTaxonomyTransform(
-      String term, Function<CstPair, Set<CstPair>> to, Function<CstPair, Set<CstPair>> from) {
-    toTaxonomy.put(term, to);
-    fromTaxonomy.put(term, from);
+      String toTerm,
+      Function<CstPair, Set<CstPair>> to,
+      String fromTerm,
+      Function<CstPair, Set<CstPair>> from) {
+    toTaxonomy.put(toTerm, to);
+    fromTaxonomy.put(fromTerm, from);
+  }
+
+  public void addNameTransform(String cstTerm, String taxonomyTerm) {
+    this.addTaxonomyTransform(
+        cstTerm,
+        pair -> Collections.singleton(new CstPair(taxonomyTerm, pair.getValue())),
+        taxonomyTerm,
+        pair -> Collections.singleton(new CstPair(cstTerm, pair.getValue())));
   }
 }

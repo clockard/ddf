@@ -19,16 +19,11 @@
 
     <reference-list id="cstDefinitions" interface="org.codice.ddf.catalog.cst.api.CstDefinition" member-type="service-object" availability="optional">
         <reference-listener bind-method="registerCstDefinition" unbind-method="unregisterCstDefinition" ref="cstService"/>
-        <reference-listener bind-method="bind" unbind-method="unbind" ref="queryTransformManager"/>
     </reference-list>
 
     <reference-list id="taxonomyTransformers" interface="org.codice.ddf.catalog.cst.api.InternalTaxonomyTransformer" member-type="service-object" availability="optional">
         <reference-listener bind-method="registerTransformer" unbind-method="unregisterTransformer" ref="cstService"/>
     </reference-list>
-
-    <bean id="queryTransformManager" class="org.codice.ddf.catalog.cst.CstQueryTransfomerManager">
-        <argument ref="cstService"/>
-    </bean>
 
     <bean id="cstService" class="org.codice.ddf.catalog.cst.CstServiceImpl">
         <cm:managed-properties persistent-id="org.codice.ddf.catalog.cst.CstServiceImpl"

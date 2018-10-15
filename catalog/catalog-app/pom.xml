@@ -680,5 +680,10 @@
             <artifactId>catalog-core-cst-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ddf.catalog.core</groupId>
+            <artifactId>catalog-core-cst-def</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
