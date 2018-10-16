@@ -25,8 +25,12 @@ import java.util.Map;
 import org.codice.ddf.catalog.cst.api.CstDefinition;
 import org.codice.ddf.catalog.cst.api.CstService;
 import org.opengis.filter.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CstQueryFilterTransformer implements QueryFilterTransformer {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(CstQueryFilterTransformer.class);
 
   private CstDefinition definition;
 
@@ -59,6 +63,12 @@ public class CstQueryFilterTransformer implements QueryFilterTransformer {
     updatedProperties.put("originalQuery", originalQuery.toString());
     updatedProperties.put("cstTransformWarnings", new ArrayList(visitor.getConversionWarnings()));
     updatedProperties.put("cstTransformErrors", new ArrayList(visitor.getConversionErrors()));
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("CST filter transform errors: {}", visitor.getConversionErrors());
+      LOGGER.debut("CST filter transform warning: {}", visitor.getConversionWarnings());
+    }
+
     return new QueryRequestImpl(
         updatedQuery, queryRequest.isEnterprise(), queryRequest.getSourceIds(), updatedProperties);
   }

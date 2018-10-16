@@ -30,10 +30,14 @@
         <service interface="org.codice.ddf.catalog.cst.api.InternalTaxonomyTransformer" ref="cstDdfTransformer"/>
         <service interface="ddf.catalog.transform.QueryFilterTransformer" ref="cstDdfV1QueryTransformer">
             <service-properties>
-                <entry key="id" value="cst:ddf:1"/>
+                <entry key="id">
+                    <list>
+                        <value>{urn:codice:cst:ddf:1}cst-query</value>
+                    </list>
+                </entry>
                 <entry key="typeNames">
                     <list>
-                        <value>cst:ddf:1</value>
+                        <value>cst:cst-query</value>
                     </list>
                 </entry>
             </service-properties>
