@@ -41,6 +41,7 @@
     <reference id="metaTypeService" interface="org.osgi.service.metatype.MetaTypeService"/>
     <reference id="clientFactoryFactory" interface="org.codice.ddf.cxf.client.ClientFactoryFactory"/>
 
+
     <bean id="registryPublisherExecutor" class="java.util.concurrent.Executors"
           factory-method="newSingleThreadScheduledExecutor">
         <argument ref="registryApiThreadFactory"/>
@@ -166,6 +167,7 @@
                               init-method="init" destroy-method="destroy">
             <argument ref="encryptionService"/>
             <argument ref="clientFactoryFactory"/>
+            <argument ref="federationAdminService"/>
             <property name="context" ref="blueprintBundleContext"/>
             <property name="filterBuilder" ref="filterBuilder"/>
             <property name="filterAdapter" ref="filterAdapter"/>

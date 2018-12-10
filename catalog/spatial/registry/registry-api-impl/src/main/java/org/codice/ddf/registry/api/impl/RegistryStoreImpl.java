@@ -18,6 +18,8 @@ import com.thoughtworks.xstream.converters.Converter;
 import ddf.catalog.Constants;
 import ddf.catalog.data.Metacard;
 import ddf.catalog.data.Result;
+import ddf.catalog.data.impl.AttributeImpl;
+import ddf.catalog.data.types.Core;
 import ddf.catalog.filter.delegate.TagsFilterDelegate;
 import ddf.catalog.operation.CreateRequest;
 import ddf.catalog.operation.CreateResponse;
@@ -32,6 +34,7 @@ import ddf.catalog.operation.UpdateResponse;
 import ddf.catalog.operation.impl.CreateRequestImpl;
 import ddf.catalog.operation.impl.CreateResponseImpl;
 import ddf.catalog.operation.impl.DeleteRequestImpl;
+import ddf.catalog.operation.impl.OperationTransactionImpl;
 import ddf.catalog.operation.impl.QueryImpl;
 import ddf.catalog.operation.impl.QueryRequestImpl;
 import ddf.catalog.operation.impl.SourceResponseImpl;
@@ -39,11 +42,16 @@ import ddf.catalog.source.IngestException;
 import ddf.catalog.source.UnsupportedQueryException;
 import ddf.security.SecurityConstants;
 import ddf.security.encryption.EncryptionService;
+import ddf.security.service.SecurityServiceException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.security.PrivilegedActionException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +72,10 @@ import org.codice.ddf.registry.api.internal.RegistryStore;
 import org.codice.ddf.registry.common.RegistryConstants;
 import org.codice.ddf.registry.common.metacard.RegistryObjectMetacardType;
 import org.codice.ddf.registry.common.metacard.RegistryUtility;
+import org.codice.ddf.registry.federationadmin.service.internal.FederationAdminException;
+import org.codice.ddf.registry.federationadmin.service.internal.FederationAdminService;
 import org.codice.ddf.registry.schemabindings.helper.MetacardMarshaller;
+import org.codice.ddf.security.common.Security;
 import org.codice.ddf.spatial.ogc.catalog.common.AvailabilityCommand;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.CswSourceConfiguration;
 import org.codice.ddf.spatial.ogc.csw.catalog.common.source.AbstractCswStore;
@@ -116,6 +127,10 @@ public class RegistryStoreImpl extends AbstractCswStore implements RegistryStore
 
   private MetaTypeService metaTypeService;
 
+  private FederationAdminService federationAdminService;
+
+  private final Security security = Security.getInstance();
+
   // age off entries after 3 seconds which should be enough time for the remote systems solr to
   // persist the entry
   private Map<String, Metacard> recent = new PassiveExpiringMap<>(TimeUnit.SECONDS.toMillis(3));
@@ -130,8 +145,11 @@ public class RegistryStoreImpl extends AbstractCswStore implements RegistryStore
   }
 
   public RegistryStoreImpl(
-      EncryptionService encryptionService, ClientFactoryFactory clientFactoryFactory) {
+      EncryptionService encryptionService,
+      ClientFactoryFactory clientFactoryFactory,
+      FederationAdminService federationAdminService) {
     super(encryptionService, clientFactoryFactory);
+    this.federationAdminService = federationAdminService;
   }
 
   @Override
@@ -377,6 +395,134 @@ public class RegistryStoreImpl extends AbstractCswStore implements RegistryStore
   }
 
   @Override
+  public void destroy(int code) {
+    LOGGER.warn("Destroying registry store with code {}", code);
+    if (federationAdminService != null && this.registryId != null && code == 1) {
+      String regIdToUnpublish = System.getProperty("org.codice.ddf.system.registry-id");
+      try {
+        security.runAsAdminWithException(
+            () -> {
+              unpublish(regIdToUnpublish);
+              return null;
+            });
+      } catch (PrivilegedActionException e) {
+        LOGGER.warn("Failed to unpublish {} from {}", regIdToUnpublish, this.getId(), e);
+      }
+    }
+  }
+
+  /**
+   * Unpublish a registry entry from the remote registry represented by this store. This is a
+   * multi-step process 1) Lookup the registry metacard for the given registry id in the local
+   * catalog 2) Remove publication reference to the remote catalog from the published locations 3)
+   * Lookup the remote metacard for this registry id via its remote-metacard-id 4) Send delete
+   * request using the remote id of the metacard
+   *
+   * @param registryIdToUnpublish
+   * @throws FederationAdminException
+   */
+  private void unpublish(String registryIdToUnpublish) throws FederationAdminException {
+    Metacard metacard = getMetacard(registryIdToUnpublish);
+
+    // Get the local metacard for this registry-id
+    List<String> registryPublications =
+        RegistryUtility.getListOfStringAttribute(
+            metacard, RegistryObjectMetacardType.PUBLISHED_LOCATIONS);
+    if (!registryPublications.contains(this.registryId)) {
+      return;
+    }
+
+    // Update the publications list
+    registryPublications.remove(this.registryId);
+    if (registryPublications.isEmpty()) {
+      registryPublications.add("No_Publications");
+    }
+
+    ArrayList<String> locArr = new ArrayList<>();
+    locArr.addAll(registryPublications);
+
+    metacard.setAttribute(
+        new AttributeImpl(RegistryObjectMetacardType.PUBLISHED_LOCATIONS, locArr));
+    metacard.setAttribute(
+        new AttributeImpl(
+            RegistryObjectMetacardType.LAST_PUBLISHED, Date.from(ZonedDateTime.now().toInstant())));
+
+    federationAdminService.updateRegistryEntry(metacard);
+
+    // Perform remote delete
+    deleteRegistryEntry(registryIdToUnpublish, metacard.getId());
+  }
+
+  private Metacard getMetacard(String registryId) throws FederationAdminException {
+    List<Metacard> metacards =
+        federationAdminService.getRegistryMetacardsByRegistryIds(
+            Collections.singletonList(registryId));
+
+    if (CollectionUtils.isEmpty(metacards)) {
+      throw new FederationAdminException(
+          "Could not retrieve metacard with registry-id " + registryId);
+    }
+
+    return metacards.get(0);
+  }
+
+  public void deleteRegistryEntry(String registryIdToUnpublish, String remoteMetacardId)
+      throws FederationAdminException {
+
+    // Lookup remote metacard using the local metacard id which is the remote metacard id
+    // on the remote system
+    List<Serializable> serializableIds;
+    List<Metacard> toDelete;
+    try {
+
+      Filter filter =
+          filterBuilder.allOf(
+              filterBuilder
+                  .attribute(Metacard.TAGS)
+                  .is()
+                  .equalTo()
+                  .text(RegistryConstants.REGISTRY_TAG_INTERNAL),
+              filterBuilder
+                  .attribute(RegistryObjectMetacardType.REMOTE_METACARD_ID)
+                  .is()
+                  .equalTo()
+                  .text(remoteMetacardId));
+      toDelete =
+          security.runWithSubjectOrElevate(
+              () ->
+                  super.query(new QueryRequestImpl(new QueryImpl(filter)))
+                      .getResults()
+                      .stream()
+                      .map(Result::getMetacard)
+                      .collect(Collectors.toList()));
+
+      serializableIds = toDelete.stream().map(Metacard::getId).collect(Collectors.toList());
+    } catch (SecurityServiceException | InvocationTargetException e) {
+      throw new FederationAdminException("Error looking up metacards to delete.", e);
+    }
+
+    // Create delete request using the metacard id used by the remote system
+    Map<String, Serializable> properties = new HashMap<>();
+    properties.put(
+        Constants.OPERATION_TRANSACTION_KEY,
+        new OperationTransactionImpl(OperationTransaction.OperationType.DELETE, toDelete));
+    DeleteRequest deleteRequest = new DeleteRequestImpl(serializableIds, Core.ID, properties);
+    try {
+      DeleteResponse deleteResponse =
+          security.runWithSubjectOrElevate(() -> super.delete(deleteRequest));
+      if (!deleteResponse.getProcessingErrors().isEmpty()) {
+        throw new FederationAdminException(
+            "Processing error occurred while deleting registry entry. Details:"
+                + deleteResponse.getProcessingErrors());
+      }
+    } catch (SecurityServiceException | InvocationTargetException e) {
+      String message = "Error deleting registry entries by registry id.";
+      LOGGER.debug("{} Registry Ids provided: {}", message, registryIdToUnpublish);
+      throw new FederationAdminException(message, e);
+    }
+  }
+
+  @Override
   protected AvailabilityCommand getAvailabilityCommand() {
     return new RegistryAvailabilityCommand();
   }
@@ -411,17 +557,15 @@ public class RegistryStoreImpl extends AbstractCswStore implements RegistryStore
     }
 
     Locale locale = Locale.getDefault();
-    if (bundle != null) {
-      if (metaTypeService != null) {
-        MetaTypeInformation mti = metaTypeService.getMetaTypeInformation(bundle);
-        if (mti != null) {
-          try {
-            connectionType = mti.getObjectClassDefinition(pid, locale.toString()).getName();
-            return connectionType;
-          } catch (IllegalArgumentException e) {
-            LOGGER.debug("Unable to get connection type for registry configuration. ", e);
-            return null;
-          }
+    if (bundle != null && metaTypeService != null) {
+      MetaTypeInformation mti = metaTypeService.getMetaTypeInformation(bundle);
+      if (mti != null) {
+        try {
+          connectionType = mti.getObjectClassDefinition(pid, locale.toString()).getName();
+          return connectionType;
+        } catch (IllegalArgumentException e) {
+          LOGGER.debug("Unable to get connection type for registry configuration. ", e);
+          return null;
         }
       }
     }
@@ -483,8 +627,8 @@ public class RegistryStoreImpl extends AbstractCswStore implements RegistryStore
     if (uri.getPort() != noPortFound) {
       port = ":" + uri.getPort();
     }
-    String connectionType = getConnectionType(this.getBundleContext().getBundle(), getFactoryPid());
-    return String.format("%s (%s%s) (%s)", shortName, uri.getHost(), port, connectionType);
+    String type = getConnectionType(this.getBundleContext().getBundle(), getFactoryPid());
+    return String.format("%s (%s%s) (%s)", shortName, uri.getHost(), port, type);
   }
 
   BundleContext getBundleContext() {
