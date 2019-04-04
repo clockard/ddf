@@ -14,6 +14,7 @@
 package org.codice.ddf.catalog.content.monitor;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 import org.apache.camel.Processor;
 import org.apache.camel.component.file.GenericFileEndpoint;
 import org.apache.camel.component.file.GenericFileOperations;
@@ -27,9 +28,13 @@ public class DurableFileSystemFileConsumer extends AbstractDurableFileConsumer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DurableFileSystemFileConsumer.class);
 
+  private static final long ERROR_ATTEMPT_PERIOD = TimeUnit.MINUTES.toMillis(5);
+
   private DurableFileAlterationListener listener;
 
   private AsyncFileAlterationObserver observer;
+
+  private long lastErrorAttempt = 0;
 
   DurableFileSystemFileConsumer(
       GenericFileEndpoint<File> endpoint,
@@ -45,7 +50,13 @@ public class DurableFileSystemFileConsumer extends AbstractDurableFileConsumer {
   protected boolean doPoll(String sha1) {
     if (observer != null) {
       observer.setListener(listener);
-      observer.checkAndNotify();
+      boolean attemptFailedFiles = false;
+      if (System.currentTimeMillis() > lastErrorAttempt + ERROR_ATTEMPT_PERIOD) {
+        attemptFailedFiles = true;
+        lastErrorAttempt = System.currentTimeMillis();
+        LOGGER.debug("Running previously failed files");
+      }
+      observer.checkAndNotify(attemptFailedFiles);
       observer.removeListener();
       return true;
     } else {
@@ -65,7 +76,6 @@ public class DurableFileSystemFileConsumer extends AbstractDurableFileConsumer {
     if (observer == null && fileName != null) {
 
       observer = AsyncFileAlterationObserver.load(new File(fileName), jsonSerializer);
-
       //  Backwards Compatibility
       if (observer == null && isOldVersion(fileName)) {
         observer = backwardsCompatibility(fileName);
@@ -73,6 +83,7 @@ public class DurableFileSystemFileConsumer extends AbstractDurableFileConsumer {
         observer = new AsyncFileAlterationObserver(new File(fileName), jsonSerializer);
       }
     }
+    observer.setFileSystemPersistenceProvider(fileSystemPersistenceProvider);
   }
 
   private boolean isOldVersion(String fileName) {
@@ -106,5 +117,6 @@ public class DurableFileSystemFileConsumer extends AbstractDurableFileConsumer {
   public void shutdown() throws Exception {
     super.shutdown();
     listener.destroy();
+    observer.destroy();
   }
 }

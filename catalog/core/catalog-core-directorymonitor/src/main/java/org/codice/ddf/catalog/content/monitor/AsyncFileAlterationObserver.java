@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.codice.ddf.catalog.content.monitor.synchronizations.CompletionSynchronization;
 import org.slf4j.Logger;
@@ -57,6 +58,7 @@ public class AsyncFileAlterationObserver {
   private final Object listenerLock = new Object();
   private final ObjectPersistentStore serializer;
   private final Object processingLock = new Object();
+  private FileSystemPersistenceProvider fileSystemPersistenceProvider;
 
   private boolean isProcessing = false;
 
@@ -107,6 +109,7 @@ public class AsyncFileAlterationObserver {
   }
 
   public void destroy() {
+    serializer.store(rootFile.getName(), rootFile);
     rootFile.destroy();
   }
 
@@ -116,17 +119,24 @@ public class AsyncFileAlterationObserver {
     }
   }
 
+  public void setFileSystemPersistenceProvider(FileSystemPersistenceProvider provider) {
+    this.fileSystemPersistenceProvider = provider;
+  }
+
   public void removeListener() {
     synchronized (listenerLock) {
       this.listener = null;
     }
   }
 
+  public boolean checkAndNotify() {
+    return checkAndNotify(false);
+  }
   /**
    * Called when the observer should compare the snapshot state to the actual state of the directory
    * being monitored.
    */
-  public boolean checkAndNotify() {
+  public boolean checkAndNotify(boolean attemptFailedFiles) {
 
     AsyncFileAlterationListener listenerCopy;
 
@@ -134,6 +144,7 @@ public class AsyncFileAlterationObserver {
       if (processing.get() != 0) {
         LOGGER.debug(
             "{} files are still processing. Waiting until the list is empty", processing.get());
+        LOGGER.debug("Processing previous failures? {}", attemptFailedFiles);
         return false;
       } else if (isProcessing) {
         LOGGER.debug("Another thread is currently running, returning until next poll");
@@ -153,7 +164,12 @@ public class AsyncFileAlterationObserver {
 
     /* fire directory/file events */
     if (rootFile.checkNetwork()) {
-      checkAndNotify(rootFile, rootFile.getChildren(), listFiles(rootFile.getFile()), listenerCopy);
+      checkAndNotify(
+          rootFile,
+          rootFile.getChildren(),
+          listFiles(rootFile.getFile()),
+          listenerCopy,
+          attemptFailedFiles);
     } else {
       //  If we can't connect to the network then the file doesn't exist to us now.
       LOGGER.debug(
@@ -180,6 +196,15 @@ public class AsyncFileAlterationObserver {
   private void doCreate(AsyncFileEntry entry, final AsyncFileAlterationListener listenerCopy) {
 
     processing.incrementAndGet();
+
+    // if we can't read the file don't even try to create
+    if (!entry.getFile().canRead()) {
+      LOGGER.debug("Can't read file {}. Will retry later.", entry.getName());
+      entry.commit();
+      entry.getParent().ifPresent(e -> e.addChild(entry));
+      onFinish();
+      return;
+    }
 
     if (!entry.getFile().isDirectory()) {
 
@@ -210,9 +235,13 @@ public class AsyncFileAlterationObserver {
 
     LOGGER.debug("commitCreate({},{}): Starting...", entry.getName(), success);
     if (success) {
-      entry.commit();
-      entry.getParent().ifPresent(e -> e.addChild(entry));
+      entry.setErrorMsg(null);
+    } else if (!entry.hasErrors()) {
+      entry.setErrorMsg("Failed to ingest");
     }
+    entry.commit();
+    entry.getParent().ifPresent(e -> e.addChild(entry));
+
     onFinish();
   }
 
@@ -222,8 +251,15 @@ public class AsyncFileAlterationObserver {
    * @param entry The previous file system entry
    */
   private void doMatch(AsyncFileEntry entry, final AsyncFileAlterationListener listenerCopy) {
+    entry.commit();
+    if (!entry.hasChanged() && (!entry.hasErrors() || !entry.getFile().canRead())) {
+      return;
+    }
 
-    if (!entry.hasChanged()) {
+    if (!fileSystemPersistenceProvider
+        .loadAllKeys()
+        .contains(DigestUtils.sha1Hex(entry.getFile().toURI().toASCIIString()))) {
+      doCreate(entry, listenerCopy);
       return;
     }
 
@@ -248,8 +284,12 @@ public class AsyncFileAlterationObserver {
   private void commitMatch(AsyncFileEntry entry, boolean success) {
     LOGGER.debug("commitMatch({},{}): Starting...", entry.getName(), success);
     if (success) {
-      entry.commit();
+      entry.setErrorMsg(null);
+    } else if (!entry.hasErrors()) {
+      entry.setErrorMsg("Failed to update");
     }
+    entry.commit();
+
     onFinish();
   }
 
@@ -303,7 +343,8 @@ public class AsyncFileAlterationObserver {
       final AsyncFileEntry parent,
       final List<AsyncFileEntry> previous,
       @Nullable final File[] files,
-      final AsyncFileAlterationListener listenerCopy) {
+      final AsyncFileAlterationListener listenerCopy,
+      boolean attemptFailedFiles) {
     //  If there was an IO error then just stop.
     if (files == null) {
       return;
@@ -316,8 +357,11 @@ public class AsyncFileAlterationObserver {
         c++;
       }
       if (c < files.length && entry.compareToFile(files[c]) == 0) {
-        doMatch(entry, listenerCopy);
-        checkAndNotify(entry, entry.getChildren(), listFiles(files[c]), listenerCopy);
+        if (!entry.hasErrors() || attemptFailedFiles) {
+          doMatch(entry, listenerCopy);
+          checkAndNotify(
+              entry, entry.getChildren(), listFiles(files[c]), listenerCopy, attemptFailedFiles);
+        }
         c++;
       } else {
         //  Do Delete
@@ -325,7 +369,12 @@ public class AsyncFileAlterationObserver {
           //  The file may still exist but it's the network that's down.
           return;
         }
-        checkAndNotify(entry, entry.getChildren(), FileUtils.EMPTY_FILE_ARRAY, listenerCopy);
+        checkAndNotify(
+            entry,
+            entry.getChildren(),
+            FileUtils.EMPTY_FILE_ARRAY,
+            listenerCopy,
+            attemptFailedFiles);
         doDelete(entry, listenerCopy);
       }
     }

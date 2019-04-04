@@ -38,11 +38,13 @@ import javax.validation.constraints.NotNull;
  */
 public class AsyncFileEntry implements Comparable<AsyncFileEntry> {
 
+  public static final String ACCESS_ERROR_MSG = "Permission Denied for file read";
   private final File contentFile;
   private boolean exists;
   private long lastModified;
   private boolean directory;
   private long length;
+  private String errorMsg;
 
   private final ConcurrentSkipListSet<AsyncFileEntry> children = new ConcurrentSkipListSet<>();
   //  Leaving transient to avoid loops
@@ -99,6 +101,14 @@ public class AsyncFileEntry implements Comparable<AsyncFileEntry> {
     return Optional.ofNullable(parent);
   }
 
+  public boolean hasErrors() {
+    return errorMsg != null;
+  }
+
+  public void setErrorMsg(String errorMsg) {
+    this.errorMsg = errorMsg;
+  }
+
   /**
    * Checking the network by checking the directory under the file. This works under two
    * assumptions:
@@ -112,14 +122,14 @@ public class AsyncFileEntry implements Comparable<AsyncFileEntry> {
     AsyncFileEntry rootParent = parent;
 
     if (rootParent == null) {
-      return snapExist();
+      return snapExist() && contentFile.canRead();
     }
 
     while (rootParent.getParent().isPresent()) {
       rootParent = rootParent.getParent().get();
     }
 
-    return rootParent.getFile().exists();
+    return rootParent.getFile().exists() && rootParent.getFile().canRead();
   }
 
   /**
@@ -215,6 +225,17 @@ public class AsyncFileEntry implements Comparable<AsyncFileEntry> {
     return contentFile.exists();
   }
 
+  private String snapErrors() {
+    if (!contentFile.canRead()) {
+      if (errorMsg == null) {
+        return ACCESS_ERROR_MSG;
+      }
+    } else if (ACCESS_ERROR_MSG.equals(errorMsg)) {
+      return null;
+    }
+    return errorMsg;
+  }
+
   private String snapName() {
     return contentFile.getName();
   }
@@ -224,10 +245,19 @@ public class AsyncFileEntry implements Comparable<AsyncFileEntry> {
   }
 
   private void refresh() {
-    name = snapName();
-    exists = snapExist();
-    lastModified = snapLastModified();
-    directory = snapDirectory();
-    length = snapLength();
+    try {
+      errorMsg = snapErrors();
+      name = snapName();
+      exists = snapExist();
+      directory = snapDirectory();
+      if (errorMsg != null) {
+        return;
+      }
+      lastModified = snapLastModified();
+      length = snapLength();
+
+    } catch (Exception e) {
+      errorMsg = e.getMessage();
+    }
   }
 }
