@@ -35,6 +35,11 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.sun.activation</groupId>
+            <artifactId>javax.activation</artifactId>
+            <version>1.2.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -49,8 +54,10 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Vendor>Codice</Bundle-Vendor>
                         <Export-Package>
-                            org.codice.felix.cm.internal
+                            org.codice.felix.cm.internal,
+                            javax.activation
                         </Export-Package>
+                        <Embed-Dependency>javax.activation</Embed-Dependency>
                     </instructions>
                 </configuration>
             </plugin>

@@ -116,7 +116,7 @@ public class PropertiesLoaderTest {
   public void testLoadPropertiesWithProperties() throws Exception {
     Properties testProperties = PROPERTIES_LOADER.loadProperties(propertiesFile.getCanonicalPath());
 
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP.entrySet()));
   }
 
   @Test
@@ -125,7 +125,7 @@ public class PropertiesLoaderTest {
         PropertiesLoader.attemptLoadWithSpring(
             PROPERTIES_FILENAME, this.getClass().getClassLoader());
 
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
   }
 
   @Test
@@ -141,7 +141,7 @@ public class PropertiesLoaderTest {
         PropertiesLoader.attemptLoadWithSpringAndClassLoader(
             PROPERTIES_FILENAME, this.getClass().getClassLoader());
 
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
   }
 
   @Test
@@ -157,7 +157,7 @@ public class PropertiesLoaderTest {
     Properties testProperties =
         PropertiesLoader.attemptLoadWithFileSystem(propertiesFile.getPath(), null);
 
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP.entrySet()));
   }
 
   @Test
@@ -173,7 +173,7 @@ public class PropertiesLoaderTest {
     Properties testProperties =
         PropertiesLoader.attemptLoadAsResource("/" + PROPERTIES_FILENAME, null);
 
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
   }
 
   @Test
@@ -200,7 +200,7 @@ public class PropertiesLoaderTest {
     Properties testProperties =
         PropertiesLoader.substituteSystemPropertyPlaceholders(propertiesMock);
 
-    assertThat(testProperties.entrySet(), equalTo(testMapSystemPropertiesAfter.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(testMapSystemPropertiesAfter.entrySet()));
   }
 
   @Test
@@ -208,21 +208,21 @@ public class PropertiesLoaderTest {
     Properties testProperties =
         PROPERTIES_LOADER.loadPropertiesWithoutSystemPropertySubstitution(
             PROPERTIES_FILENAME, null);
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
 
     testProperties =
         PROPERTIES_LOADER.loadPropertiesWithoutSystemPropertySubstitution(
             PROPERTIES_FILENAME, this.getClass().getClassLoader());
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
 
     testProperties =
         PROPERTIES_LOADER.loadPropertiesWithoutSystemPropertySubstitution(
             "/" + PROPERTIES_FILENAME, null);
-    assertThat(testProperties.entrySet(), equalTo(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
 
     testProperties =
         PROPERTIES_LOADER.loadPropertiesWithoutSystemPropertySubstitution(
             getClass().getClassLoader().getResource(PROPERTIES_FILENAME).getPath(), null);
-    assertTrue(testProperties.entrySet().equals(EXAMPLE_MAP_WITH_SYS_PROP_KEY_REV.entrySet()));
+    assertTrue(testProperties.entrySet().containsAll(EXAMPLE_MAP_WITH_SYS_PROP_KEY.entrySet()));
   }
 }

@@ -100,6 +100,7 @@ public class GeoNamesCatalogIndexerTest {
   private UuidGenerator uuidGenerator;
 
   @Before
+  @SuppressWarnings("DiscardedPostfixExpression")
   public void setUp() throws Exception {
 
     geoEntryCreator = mock(GeoEntryCreator.class);

@@ -16,7 +16,7 @@ package ddf.catalog.source.solr;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
-import com.sun.tools.javac.util.List;
+import com.google.common.collect.ImmutableList;
 import ddf.catalog.data.Metacard;
 import org.junit.Test;
 
@@ -31,16 +31,16 @@ public class RealTimeGetDelegateTest {
 
   @Test
   public void and() {
-    assertTrue(delegate.and(List.of(true, true)));
-    assertTrue(delegate.and(List.of(true, false)));
-    assertFalse(delegate.and(List.of(false, false)));
+    assertTrue(delegate.and(ImmutableList.of(true, true)));
+    assertTrue(delegate.and(ImmutableList.of(true, false)));
+    assertFalse(delegate.and(ImmutableList.of(false, false)));
   }
 
   @Test
   public void or() {
-    assertTrue(delegate.or(List.of(true, true)));
-    assertFalse(delegate.or(List.of(true, false)));
-    assertFalse(delegate.or(List.of(false, false)));
+    assertTrue(delegate.or(ImmutableList.of(true, true)));
+    assertFalse(delegate.or(ImmutableList.of(true, false)));
+    assertFalse(delegate.or(ImmutableList.of(false, false)));
   }
 
   @Test
